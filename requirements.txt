@@ -1,0 +1,12 @@
+boto3
+pandas
+matplotlib
+numpy
+tensorflow
+python-dotenv
+earthaccess
+cartopy
+xarray
+ipywidgets
+h5netcdf
+pyarrow
