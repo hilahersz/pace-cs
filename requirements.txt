@@ -1,4 +1,12 @@
 earthaccess
 cartopy
 boto3
-dotenv
+python-dotenv
+pyarrow
+pandas
+numpy
+xarray
+scikit-learn
+tensorflow
+boruta
+joblib
