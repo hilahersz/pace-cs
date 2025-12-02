@@ -21,7 +21,7 @@ This repository contains five main analysis notebooks:
 ### Setup
 1. Clone this repository:
    ```bash
-   git clone <repository-url>
+   git clone git@github.com:hilahersz/pace-cs.git
    cd pace-cs
    ```
 
