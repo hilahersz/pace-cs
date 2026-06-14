@@ -2,6 +2,8 @@
 
 Compressive sensing techniques for NASA's PACE (Plankton, Aerosol, Cloud, ocean Ecosystem) mission satellite data analysis. This project implements and compares various machine learning frameworks for spectral data compression and reconstruction.
 
+This repository is the code accompanying the paper **"Asymmetric Autoencoder to Replace Meta-Optics for Hyperspectral Imaging,"** which demonstrates an asymmetric autoencoder (shallow encoder, deep decoder) that matches PCA-level reconstruction error — even under a binary constraint — without metaoptics. See [Citation](#citation) below.
+
 ## Notebooks
 
 This repository contains five main analysis notebooks:
@@ -45,3 +47,17 @@ The project dependencies include:
 - `tensorflow` - Deep learning models
 - `xarray`, `pandas`, `numpy` - Data manipulation
 - `pyarrow` - Parquet file handling
+
+## Citation
+
+If you use this code, please cite the accompanying paper:
+
+```bibtex
+@misc{herszfang2026asymmetric,
+  title  = {Asymmetric Autoencoder to Replace Meta-Optics for Hyperspectral Imaging},
+  author = {Herszfang, Hila Paz and Salama, Mohamed Yehia and Crank, Kyler and
+            Kassem, Mohamed and Tiwari, Prashant and Elston, Stephen and
+            Huang, Bruce and Ibrahim, Amir and Blocker, Riley Edward},
+  year   = {2026}
+}
+```
