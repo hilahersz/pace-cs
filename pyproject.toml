@@ -1,0 +1,32 @@
+[project]
+name = "pace-cs"
+version = "0.1.0"
+description = "Compressive sensing for NASA PACE OCI hyperspectral data — asymmetric autoencoders as an alternative to meta-optics."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+    "earthaccess",
+    "cartopy",
+    "boto3",
+    "python-dotenv",
+    "pyarrow",
+    "pandas",
+    "numpy",
+    "xarray",
+    "scikit-learn",
+    "tensorflow",
+    "boruta",
+    "joblib",
+    "matplotlib",
+]
+
+[dependency-groups]
+# Tools for running the notebooks interactively.
+notebook = [
+    "jupyter",
+    "ipykernel",
+]
+
+[tool.uv]
+package = false

@@ -18,7 +18,7 @@ This repository contains five main analysis notebooks:
 
 ### Prerequisites
 - Python 3.11 or higher
-- Virtual environment (recommended)
+- [uv](https://docs.astral.sh/uv/) for dependency management
 
 ### Setup
 1. Clone this repository:
@@ -27,26 +27,47 @@ This repository contains five main analysis notebooks:
    cd pace-cs
    ```
 
-2. Create and activate a virtual environment:
+2. Install dependencies into a virtual environment with uv:
    ```bash
-   python3.11 -m venv venv
-   source venv/bin/activate  
+   uv sync                  # core dependencies
+   uv sync --group notebook # also install Jupyter to run the notebooks
    ```
+   `uv` creates and manages a `.venv` automatically from the pinned
+   `uv.lock`; run commands inside it with `uv run`, e.g. `uv run jupyter lab`.
 
-3. Install required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Configuration
 
-### Required Packages
-The project dependencies include:
-- `earthaccess` - NASA Earthdata authentication and data access
-- `cartopy` - Geospatial data processing
-- `boto3` - AWS S3 integration
-- `scikit-learn` - Machine learning frameworks
-- `tensorflow` - Deep learning models
-- `xarray`, `pandas`, `numpy` - Data manipulation
-- `pyarrow` - Parquet file handling
+The notebooks read credentials and bucket names from a `.env` file in the
+repository root (loaded automatically via `python-dotenv`). This file is
+git-ignored — create your own with the following keys:
+
+```bash
+# NASA Earthdata login (https://urs.earthdata.nasa.gov/)
+EARTHDATA_USERNAME=your_nasa_earthdata_username
+EARTHDATA_PASSWORD=your_nasa_earthdata_password
+
+# AWS credentials for the S3 buckets that hold samples and results
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+
+# S3 buckets
+BUCKET_NAME=your_sample_data_bucket
+RESULTS_BUCKET_NAME=your_framework_results_bucket
+HYPERPARAMETERS_RESULTS_BUCKET_NAME=your_hyperparameter_results_bucket
+SATURATION_BUCKET_NAME=your_data_saturation_results_bucket
+```
+
+`Preprocessing_Granules.ipynb` authenticates to NASA Earthdata from these
+variables (`earthaccess.login(strategy="environment")`); if they are not set,
+it falls back to an interactive login prompt. A free Earthdata account is
+required to download PACE granules.
+
+### Dependencies
+Dependencies are declared in [pyproject.toml](pyproject.toml) and pinned in
+`uv.lock`. Key packages include `earthaccess` (NASA Earthdata access),
+`cartopy` (geospatial processing), `boto3` (AWS S3), `scikit-learn` /
+`tensorflow` / `boruta` (modeling), `xarray` / `pandas` / `numpy` (data), and
+`pyarrow` (Parquet I/O).
 
 ## Citation
 
