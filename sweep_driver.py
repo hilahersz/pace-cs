@@ -7,6 +7,10 @@ namespace. Training cells whose learning-curve files already exist
 be interrupted (laptop sleep) and relaunched at the cost of only the model
 that was in flight.
 """
+import tensorflow  # noqa: F401  MUST be first: binds abseil symbols before
+# pandas/pyarrow load their own copy — otherwise TF's fit() deadlocks on a
+# semaphore resolved into libarrow's abseil (see commit message).
+
 import json
 import os
 import pickle
