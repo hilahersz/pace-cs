@@ -19,6 +19,7 @@ dependencies = [
     "boruta",
     "joblib",
     "matplotlib",
+    "seaborn",
 ]
 
 [dependency-groups]

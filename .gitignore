@@ -211,3 +211,12 @@ false/
 
 # macOS
 .DS_Store
+
+# Local data cache (large, regenerable)
+X_cache.pkl
+
+# Saved model artifacts (regenerable from training runs)
+cae_savedmodel.zip
+fsae_savedmodel.zip
+cae_artifacts/
+fsae_artifacts/
