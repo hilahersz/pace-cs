@@ -82,8 +82,8 @@ def expected_curves(sec, ns):
     if not m:
         return None
     arch = m.group(1)
-    vm = re.search(r'version = "(\w+)"', sec)
-    version = vm.group(1) if vm else "v9"
+    vm = re.search(r'version = (?:"(\w+)"|(CAE_VERSION))', sec)
+    version = (vm.group(1) or ns["CAE_VERSION"]) if vm else "v9"
     loop = re.search(r"for k in \[([0-9, ]+)\]", sec)
     if loop:
         ks = [int(x) for x in loop.group(1).split(",")]

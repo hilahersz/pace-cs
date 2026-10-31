@@ -131,6 +131,12 @@ class TemperatureAnnealer(keras.callbacks.Callback):
         self.temperatures.append(float(self.layer.temperature.numpy()))
 
 
+# False (default): fixed tau = 0.1, the setting behind the paper's results (v9).
+# True: anneal tau from 5 to 0.1 over 60 epochs, the follow-up experiment (v10).
+ANNEAL_TAU = False
+CAE_VERSION = "v10" if ANNEAL_TAU else "v9"
+
+
 class ColumnSelector(layers.Layer):
     def __init__(self, indices, **kwargs):
         super().__init__(**kwargs)
@@ -206,16 +212,17 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
-temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
+annealers = [TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)] if ANNEAL_TAU else []
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
     validation_split=0.2,
-    callbacks=[temperature_annealer]
+    callbacks=annealers
 )
-cae_hist.history["temperature"] = temperature_annealer.temperatures
+if annealers:
+    cae_hist.history["temperature"] = annealers[0].temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -223,7 +230,7 @@ X_encoded = encoder.predict(X_scaled)
 # Reconstruct
 X_reconstructed = cae.predict(X_scaled)
 
-version = "v9"
+version = CAE_VERSION
 architecture = "asymmetric_architecture"
 encoder_size = k
 
@@ -268,16 +275,17 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
-temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
+annealers = [TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)] if ANNEAL_TAU else []
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
     validation_split=0.2,
-    callbacks=[temperature_annealer]
+    callbacks=annealers
 )
-cae_hist.history["temperature"] = temperature_annealer.temperatures
+if annealers:
+    cae_hist.history["temperature"] = annealers[0].temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -285,7 +293,7 @@ X_encoded = encoder.predict(X_scaled)
 # Reconstruct
 X_reconstructed = cae.predict(X_scaled)
 
-version = "v9"
+version = CAE_VERSION
 architecture = "asymmetric_architecture"
 encoder_size = k
 
@@ -330,16 +338,17 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
-temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
+annealers = [TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)] if ANNEAL_TAU else []
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
     validation_split=0.2,
-    callbacks=[temperature_annealer]
+    callbacks=annealers
 )
-cae_hist.history["temperature"] = temperature_annealer.temperatures
+if annealers:
+    cae_hist.history["temperature"] = annealers[0].temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -347,7 +356,7 @@ X_encoded = encoder.predict(X_scaled)
 # Reconstruct
 X_reconstructed = cae.predict(X_scaled)
 
-version = "v9"
+version = CAE_VERSION
 architecture = "asymmetric_architecture"
 encoder_size = k
 
@@ -392,16 +401,17 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
-temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
+annealers = [TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)] if ANNEAL_TAU else []
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
     validation_split=0.2,
-    callbacks=[temperature_annealer]
+    callbacks=annealers
 )
-cae_hist.history["temperature"] = temperature_annealer.temperatures
+if annealers:
+    cae_hist.history["temperature"] = annealers[0].temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -409,7 +419,7 @@ X_encoded = encoder.predict(X_scaled)
 # Reconstruct
 X_reconstructed = cae.predict(X_scaled)
 
-version = "v9"
+version = CAE_VERSION
 architecture = "asymmetric_architecture"
 encoder_size = k
 
@@ -454,16 +464,17 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
-temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
+annealers = [TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)] if ANNEAL_TAU else []
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
     validation_split=0.2,
-    callbacks=[temperature_annealer]
+    callbacks=annealers
 )
-cae_hist.history["temperature"] = temperature_annealer.temperatures
+if annealers:
+    cae_hist.history["temperature"] = annealers[0].temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -471,7 +482,7 @@ X_encoded = encoder.predict(X_scaled)
 # Reconstruct
 X_reconstructed = cae.predict(X_scaled)
 
-version = "v9"
+version = CAE_VERSION
 architecture = "asymmetric_architecture"
 encoder_size = k
 
@@ -511,16 +522,17 @@ for k in [16, 24, 32, 48, 64]:
     cae = keras.Model(inputs=input_layer, outputs=decoded)
     cae.compile(optimizer="adam", loss="mse")
 
-    temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
+    annealers = [TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)] if ANNEAL_TAU else []
     cae_hist = cae.fit(
         X_scaled, X_scaled,
         epochs=60,
         batch_size=32,
         shuffle=True,
         validation_split=0.2,
-        callbacks=[temperature_annealer]
+        callbacks=annealers
     )
-    cae_hist.history["temperature"] = temperature_annealer.temperatures
+    if annealers:
+        cae_hist.history["temperature"] = annealers[0].temperatures
 
     encoder = keras.Model(inputs=input_layer, outputs=encoded)
     X_encoded = encoder.predict(X_scaled)
@@ -528,7 +540,7 @@ for k in [16, 24, 32, 48, 64]:
     # Reconstruct
     X_reconstructed = cae.predict(X_scaled)
 
-    version = "v9"
+    version = CAE_VERSION
     architecture = "symmetric_architecture"
     encoder_size = k
 

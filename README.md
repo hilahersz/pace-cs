@@ -14,6 +14,10 @@ This repository contains five main analysis notebooks:
 4. **[data_saturation.ipynb](data_saturation.ipynb)** - Analysis of training data requirements and performance scaling from 10% to 100% dataset utilization
 5. **[analysis.ipynb](analysis.ipynb)** - Consolidated analysis and comparison of all experimental results, including model performance metrics and critical wavelength analysis
 
+### Reproducing the paper
+
+The paper's results (v9) use a fixed Gumbel-softmax temperature, τ = 0.1, which is the default. Setting `ANNEAL_TAU = True` in `hyperparameter_tuning.ipynb` (or `hp_run.py`) runs the follow-up experiment mentioned in the paper: τ is annealed from 5 to 0.1 over 60 epochs and results are saved as v10. The tag `v9-submitted` marks the code as it was when the paper was submitted.
+
 ## Installation
 
 ### Prerequisites
