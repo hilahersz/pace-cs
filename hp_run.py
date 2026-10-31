@@ -79,7 +79,9 @@ class ConcreteSelect(layers.Layer):
         super().__init__(**kwargs)
         self.k = k
         self.input_dim = input_dim
-        self.temperature = temperature
+        self.temperature = tf.Variable(
+            temperature, trainable=False, dtype=tf.float32, name="temperature"
+        )
 
     def build(self, input_shape):
         self.logits = self.add_weight(
@@ -104,9 +106,29 @@ class ConcreteSelect(layers.Layer):
         config.update({
             "k": self.k,
             "input_dim": self.input_dim,
-            "temperature": self.temperature
+            "temperature": float(self.temperature.numpy())
         })
         return config
+
+
+class TemperatureAnnealer(keras.callbacks.Callback):
+    """Exponentially decays a ConcreteSelect layer's Gumbel temperature over training."""
+
+    def __init__(self, layer, t_start=5.0, t_end=0.1, total_epochs=60):
+        super().__init__()
+        self.layer = layer
+        self.t_start = t_start
+        self.t_end = t_end
+        self.total_epochs = total_epochs
+        self.temperatures = []
+
+    def on_epoch_begin(self, epoch, logs=None):
+        frac = min(epoch / max(self.total_epochs - 1, 1), 1.0)
+        temperature = self.t_start * (self.t_end / self.t_start) ** frac
+        self.layer.temperature.assign(temperature)
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.temperatures.append(float(self.layer.temperature.numpy()))
 
 
 class ColumnSelector(layers.Layer):
@@ -173,7 +195,8 @@ k = 16
 input_dim = X_scaled.shape[1]
 
 input_layer = keras.Input(shape=(input_dim,))
-encoded = ConcreteSelect(k=k, input_dim=input_dim)(input_layer)
+concrete_layer = ConcreteSelect(k=k, input_dim=input_dim)
+encoded = concrete_layer(input_layer)
 
 decoded = layers.Dense(32, activation="relu")(encoded)
 decoded = layers.Dense(64, activation="relu")(decoded)
@@ -183,13 +206,16 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
+temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
-    validation_split=0.2
+    validation_split=0.2,
+    callbacks=[temperature_annealer]
 )
+cae_hist.history["temperature"] = temperature_annealer.temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -212,10 +238,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("cae_artifacts", exist_ok=True)
-cae.save_weights("cae_artifacts/cae_weights.weights.h5")
+artifact_dir = f"cae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+cae.save_weights(os.path.join(artifact_dir, "cae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("cae_savedmodel", "zip", "cae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -230,7 +257,8 @@ k = 24
 input_dim = X_scaled.shape[1]
 
 input_layer = keras.Input(shape=(input_dim,))
-encoded = ConcreteSelect(k=k, input_dim=input_dim)(input_layer)
+concrete_layer = ConcreteSelect(k=k, input_dim=input_dim)
+encoded = concrete_layer(input_layer)
 
 decoded = layers.Dense(32, activation="relu")(encoded)
 decoded = layers.Dense(64, activation="relu")(decoded)
@@ -240,13 +268,16 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
+temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
-    validation_split=0.2
+    validation_split=0.2,
+    callbacks=[temperature_annealer]
 )
+cae_hist.history["temperature"] = temperature_annealer.temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -269,10 +300,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("cae_artifacts", exist_ok=True)
-cae.save_weights("cae_artifacts/cae_weights.weights.h5")
+artifact_dir = f"cae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+cae.save_weights(os.path.join(artifact_dir, "cae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("cae_savedmodel", "zip", "cae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -287,7 +319,8 @@ k = 32
 input_dim = X_scaled.shape[1]
 
 input_layer = keras.Input(shape=(input_dim,))
-encoded = ConcreteSelect(k=k, input_dim=input_dim)(input_layer)
+concrete_layer = ConcreteSelect(k=k, input_dim=input_dim)
+encoded = concrete_layer(input_layer)
 
 decoded = layers.Dense(64, activation="relu")(encoded)
 decoded = layers.Dense(128, activation="relu")(decoded)
@@ -297,13 +330,16 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
+temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
-    validation_split=0.2
+    validation_split=0.2,
+    callbacks=[temperature_annealer]
 )
+cae_hist.history["temperature"] = temperature_annealer.temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -326,10 +362,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("cae_artifacts", exist_ok=True)
-cae.save_weights("cae_artifacts/cae_weights.weights.h5")
+artifact_dir = f"cae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+cae.save_weights(os.path.join(artifact_dir, "cae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("cae_savedmodel", "zip", "cae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -344,7 +381,8 @@ k = 48
 input_dim = X_scaled.shape[1]
 
 input_layer = keras.Input(shape=(input_dim,))
-encoded = ConcreteSelect(k=k, input_dim=input_dim)(input_layer)
+concrete_layer = ConcreteSelect(k=k, input_dim=input_dim)
+encoded = concrete_layer(input_layer)
 
 decoded = layers.Dense(64, activation="relu")(encoded)
 decoded = layers.Dense(128, activation="relu")(decoded)
@@ -354,13 +392,16 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
+temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
-    validation_split=0.2
+    validation_split=0.2,
+    callbacks=[temperature_annealer]
 )
+cae_hist.history["temperature"] = temperature_annealer.temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -383,10 +424,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("cae_artifacts", exist_ok=True)
-cae.save_weights("cae_artifacts/cae_weights.weights.h5")
+artifact_dir = f"cae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+cae.save_weights(os.path.join(artifact_dir, "cae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("cae_savedmodel", "zip", "cae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -401,7 +443,8 @@ k = 64
 input_dim = X_scaled.shape[1]
 
 input_layer = keras.Input(shape=(input_dim,))
-encoded = ConcreteSelect(k=k, input_dim=input_dim)(input_layer)
+concrete_layer = ConcreteSelect(k=k, input_dim=input_dim)
+encoded = concrete_layer(input_layer)
 
 decoded = layers.Dense(64, activation="relu")(encoded)
 decoded = layers.Dense(128, activation="relu")(decoded)
@@ -411,13 +454,16 @@ decoded = layers.Dense(input_dim, activation="sigmoid")(decoded)
 cae = keras.Model(inputs=input_layer, outputs=decoded)
 cae.compile(optimizer="adam", loss="mse")
 
+temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
 cae_hist = cae.fit(
     X_scaled, X_scaled,
     epochs=60,
     batch_size=32,
     shuffle=True,
-    validation_split=0.2
+    validation_split=0.2,
+    callbacks=[temperature_annealer]
 )
+cae_hist.history["temperature"] = temperature_annealer.temperatures
 
 encoder = keras.Model(inputs=input_layer, outputs=encoded)
 X_encoded = encoder.predict(X_scaled)
@@ -440,10 +486,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("cae_artifacts", exist_ok=True)
-cae.save_weights("cae_artifacts/cae_weights.weights.h5")
+artifact_dir = f"cae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+cae.save_weights(os.path.join(artifact_dir, "cae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("cae_savedmodel", "zip", "cae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -457,19 +504,23 @@ for k in [16, 24, 32, 48, 64]:
     input_dim = X_scaled.shape[1]
 
     input_layer = keras.Input(shape=(input_dim,))
-    encoded = ConcreteSelect(k=k, input_dim=input_dim)(input_layer)
+    concrete_layer = ConcreteSelect(k=k, input_dim=input_dim)
+    encoded = concrete_layer(input_layer)
     decoded = layers.Dense(input_dim, activation="sigmoid")(encoded)
 
     cae = keras.Model(inputs=input_layer, outputs=decoded)
     cae.compile(optimizer="adam", loss="mse")
 
+    temperature_annealer = TemperatureAnnealer(concrete_layer, t_start=5.0, t_end=0.1, total_epochs=60)
     cae_hist = cae.fit(
         X_scaled, X_scaled,
         epochs=60,
         batch_size=32,
         shuffle=True,
-        validation_split=0.2
+        validation_split=0.2,
+        callbacks=[temperature_annealer]
     )
+    cae_hist.history["temperature"] = temperature_annealer.temperatures
 
     encoder = keras.Model(inputs=input_layer, outputs=encoded)
     X_encoded = encoder.predict(X_scaled)
@@ -492,10 +543,11 @@ for k in [16, 24, 32, 48, 64]:
         engine="pyarrow",
     )
 
-    os.makedirs("cae_artifacts", exist_ok=True)
-    cae.save_weights("cae_artifacts/cae_weights.weights.h5")
+    artifact_dir = f"cae_artifacts/{architecture}_{encoder_size}_{version}"
+    os.makedirs(artifact_dir, exist_ok=True)
+    cae.save_weights(os.path.join(artifact_dir, "cae_weights.weights.h5"))
 
-    zip_path = shutil.make_archive("cae_savedmodel", "zip", "cae_artifacts")
+    zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
     s3 = boto3.client("s3")
     s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -612,10 +664,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -668,10 +721,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -776,10 +830,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -831,10 +886,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -939,10 +995,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -995,10 +1052,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -1103,10 +1161,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -1159,10 +1218,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -1267,10 +1327,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 
@@ -1323,10 +1384,11 @@ performance.to_parquet(
       engine="pyarrow",
   )
 
-os.makedirs("fsae_artifacts", exist_ok=True)
-fsae.save_weights("fsae_artifacts/fsae_weights.weights.h5")
+artifact_dir = f"fsae_artifacts/{architecture}_{encoder_size}_{version}"
+os.makedirs(artifact_dir, exist_ok=True)
+fsae.save_weights(os.path.join(artifact_dir, "fsae_weights.weights.h5"))
 
-zip_path = shutil.make_archive("fsae_savedmodel", "zip", "fsae_artifacts")
+zip_path = shutil.make_archive(artifact_dir, "zip", artifact_dir)
 s3 = boto3.client("s3")
 s3.upload_file(zip_path, results_bucket, weights_path)
 

@@ -1,0 +1,92 @@
+[
+  {
+    "arch": "asym",
+    "k": 16,
+    "v9_final": 0.0008955175871960819,
+    "v10_final": 0.0008425684063695371,
+    "improvement_pct": 5.912690223352481,
+    "v10_min_epoch": 58,
+    "v10_final_is_min": false
+  },
+  {
+    "arch": "asym",
+    "k": 24,
+    "v9_final": 0.0008820669609121978,
+    "v10_final": 0.0008277967572212219,
+    "improvement_pct": 6.152617215687556,
+    "v10_min_epoch": 54,
+    "v10_final_is_min": false
+  },
+  {
+    "arch": "asym",
+    "k": 32,
+    "v9_final": 0.000870159943588078,
+    "v10_final": 0.0008262706687673926,
+    "improvement_pct": 5.04381696078876,
+    "v10_min_epoch": 58,
+    "v10_final_is_min": false
+  },
+  {
+    "arch": "asym",
+    "k": 48,
+    "v9_final": 0.0008708260720595717,
+    "v10_final": 0.0008273173589259386,
+    "improvement_pct": 4.9962575225534565,
+    "v10_min_epoch": 56,
+    "v10_final_is_min": false
+  },
+  {
+    "arch": "asym",
+    "k": 64,
+    "v9_final": 0.0008914398495107889,
+    "v10_final": 0.0008299744804389775,
+    "improvement_pct": 6.895066347498697,
+    "v10_min_epoch": 50,
+    "v10_final_is_min": false
+  },
+  {
+    "arch": "sym",
+    "k": 16,
+    "v9_final": 0.0017328491667285562,
+    "v10_final": 0.0015675828326493502,
+    "improvement_pct": 9.537260210085803,
+    "v10_min_epoch": 59,
+    "v10_final_is_min": true
+  },
+  {
+    "arch": "sym",
+    "k": 24,
+    "v9_final": 0.001666074967943132,
+    "v10_final": 0.0015362318372353911,
+    "improvement_pct": 7.793354633257578,
+    "v10_min_epoch": 59,
+    "v10_final_is_min": true
+  },
+  {
+    "arch": "sym",
+    "k": 32,
+    "v9_final": 0.0016107909614220262,
+    "v10_final": 0.0015361456898972392,
+    "improvement_pct": 4.634075638150414,
+    "v10_min_epoch": 57,
+    "v10_final_is_min": false
+  },
+  {
+    "arch": "sym",
+    "k": 48,
+    "v9_final": 0.0016367064090445638,
+    "v10_final": 0.001546800252981484,
+    "improvement_pct": 5.493114438011093,
+    "v10_min_epoch": 52,
+    "v10_final_is_min": false
+  },
+  {
+    "arch": "sym",
+    "k": 64,
+    "v9_final": 0.0016206930158659816,
+    "v10_final": 0.0015505824703723192,
+    "improvement_pct": 4.325960857935846,
+    "v10_min_epoch": 54,
+    "v10_final_is_min": false
+  }
+]

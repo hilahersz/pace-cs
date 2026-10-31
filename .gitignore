@@ -220,3 +220,6 @@ cae_savedmodel.zip
 fsae_savedmodel.zip
 cae_artifacts/
 fsae_artifacts/
+
+# One-off exploratory test results, not part of the official sweep
+experiments/
